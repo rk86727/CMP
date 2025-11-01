@@ -21,6 +21,7 @@
                     </select>
                     <div class="user-info">
                         <span id="currentUser"></span>
+                        <span id="syncStatus" class="sync-status">🔄 Syncing...</span>
                         <button id="logoutBtn" class="btn-logout">Logout</button>
                     </div>
                 </div>
@@ -44,7 +45,7 @@
                     <button id="addNewBtn" class="btn-primary">+ Add New</button>
                 </div>
                 <div id="tableContent" class="table-wrapper">
-                    <!-- Dynamic table content -->
+                    <div class="loading">Loading data...</div>
                 </div>
             </div>
         </main>
@@ -67,6 +68,15 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="app-firebase.js"></script>
 </body>
 </html>
