@@ -1,7 +1,8 @@
-const CACHE_NAME = 'rcm-v1';
+const CACHE_NAME = 'road-construction-v1';
 const urlsToCache = [
     '/',
     '/index.html',
+    '/login.html',
     '/css/styles.css',
     '/js/app.js',
     '/js/auth.js',
@@ -30,15 +31,34 @@ self.addEventListener('fetch', event => {
                 if (response) {
                     return response;
                 }
-                return fetch(event.request);
-            }
-            )
+                
+                // Clone the request
+                const fetchRequest = event.request.clone();
+                
+                return fetch(fetchRequest).then(response => {
+                    // Check if valid response
+                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                        return response;
+                    }
+                    
+                    // Clone the response
+                    const responseToCache = response.clone();
+                    
+                    caches.open(CACHE_NAME)
+                        .then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+                    
+                    return response;
+                });
+            })
     );
 });
 
 // Activate event
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME];
+    
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
