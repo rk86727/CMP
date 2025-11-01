@@ -1,83 +1,140 @@
-// Authentication Management
-class Auth {
-    constructor() {
-        this.currentUser = null;
-        this.checkSession();
-    }
+// Authentication Module
+const Auth = {
+    // Initialize default users
+    init() {
+        if (!localStorage.getItem('users')) {
+            const defaultUsers = [
+                {
+                    id: 1,
+                    email: 'admin@roadconstruction.com',
+                    password: 'Admin@123',
+                    role: 'superadmin',
+                    name: 'Super Admin'
+                }
+            ];
+            localStorage.setItem('users', JSON.stringify(defaultUsers));
+        }
+    },
 
+    // Login function
     login(email, password) {
-        const users = db.getAll('users');
-        const user = users.find(u =>
-            u.email === email &&
-            u.password === password &&
-            u.status === 'active'
-        );
-
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find(u => u.email === email && u.password === password);
+        
         if (user) {
-            this.currentUser = {
+            const sessionData = {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                role: user.role
+                role: user.role,
+                loginTime: new Date().toISOString()
             };
-            sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+            sessionStorage.setItem('currentUser', JSON.stringify(sessionData));
             return true;
         }
         return false;
-    }
+    },
 
+    // Logout function
     logout() {
-        this.currentUser = null;
         sessionStorage.removeItem('currentUser');
-    }
+        window.location.href = 'login.html';
+    },
 
-    checkSession() {
-        const userData = sessionStorage.getItem('currentUser');
-        if (userData) {
-            this.currentUser = JSON.parse(userData);
-            return true;
-        }
-        return false;
-    }
-
+    // Check if user is logged in
     isAuthenticated() {
-        return this.currentUser !== null;
-    }
+        return sessionStorage.getItem('currentUser') !== null;
+    },
 
+    // Get current user
+    getCurrentUser() {
+        const userData = sessionStorage.getItem('currentUser');
+        return userData ? JSON.parse(userData) : null;
+    },
+
+    // Check user permissions
     hasPermission(action, table) {
-        if (!this.currentUser) return false;
+        const user = this.getCurrentUser();
+        if (!user) return false;
 
         const permissions = {
             superadmin: {
-                view: ['contracts', 'bills', 'boq', 'measurements', 'users'],
-                add: ['contracts', 'bills', 'boq', 'measurements', 'users'],
-                edit: ['contracts', 'bills', 'boq', 'measurements', 'users'],
-                delete: ['contracts', 'bills', 'boq', 'measurements', 'users']
+                view: ['all'],
+                edit: ['all'],
+                delete: ['all'],
+                create: ['all']
             },
             admin: {
-                view: ['contracts', 'bills', 'boq', 'measurements'],
-                add: ['contracts', 'bills', 'boq', 'measurements'],
-                edit: ['contracts', 'bills', 'boq', 'measurements'],
-                delete: ['bills', 'boq', 'measurements']
+                view: ['all'],
+                edit: ['contract', 'bill', 'boq', 'measurement'],
+                delete: ['contract', 'bill', 'boq', 'measurement'],
+                create: ['contract', 'bill', 'boq', 'measurement']
             },
             user: {
-                view: ['contracts', 'bills', 'boq', 'measurements'],
-                add: ['measurements'],
-                edit: ['measurements'],
-                delete: []
+                view: ['all'],
+                edit: ['measurement'],
+                delete: [],
+                create: ['measurement']
             }
         };
 
-        const userPermissions = permissions[this.currentUser.role];
-        return userPermissions &&
-            userPermissions[action] &&
-            userPermissions[action].includes(table);
-    }
+        const userPermissions = permissions[user.role];
+        if (!userPermissions) return false;
 
-    getCurrentUser() {
-        return this.currentUser;
+        return userPermissions[action].includes('all') || 
+               userPermissions[action].includes(table);
+    },
+
+    // Create new user (superadmin only)
+    createUser(userData) {
+        const currentUser = this.getCurrentUser();
+        if (currentUser?.role !== 'superadmin') return false;
+
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const newUser = {
+            id: Date.now(),
+            ...userData,
+            createdAt: new Date().toISOString(),
+            createdBy: currentUser.id
+        };
+        
+        users.push(newUser);
+        localStorage.setItem('users', JSON.stringify(users));
+        return true;
+    },
+
+    // Get all users
+    getAllUsers() {
+        return JSON.parse(localStorage.getItem('users') || '[]');
+    },
+
+    // Update user
+    updateUser(userId, updates) {
+        const currentUser = this.getCurrentUser();
+        if (currentUser?.role !== 'superadmin') return false;
+
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const index = users.findIndex(u => u.id === userId);
+        
+        if (index !== -1) {
+            users[index] = { ...users[index], ...updates };
+            localStorage.setItem('users', JSON.stringify(users));
+            return true;
+        }
+        return false;
+    },
+
+    // Delete user
+    deleteUser(userId) {
+        const currentUser = this.getCurrentUser();
+        if (currentUser?.role !== 'superadmin') return false;
+
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const filtered = users.filter(u => u.id !== userId);
+        localStorage.setItem('users', JSON.stringify(filtered));
+        return true;
     }
-}
+};
 
 // Initialize authentication
-const auth = new Auth();
+Auth.init();
