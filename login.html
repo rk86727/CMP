@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Road Construction Management</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/styles.css">
+    <meta name="theme-color" content="#2196F3">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>Road Construction Management</h1>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="Enter your password">
+                </div>
+                <button type="submit" class="btn-primary btn-block">Login</button>
+                <div id="errorMsg" class="error-message"></div>
+            </form>
+            <div class="login-info">
+                <p>Default Superadmin:</p>
+                <p>Email: admin@roadconstruction.com</p>
+                <p>Password: Admin@123</p>
+            </div>
+        </div>
+    </div>
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (Auth.login(email, password)) {
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('errorMsg').textContent = 'Invalid credentials';
+            }
+        });
+    </script>
+</body>
+</html>
