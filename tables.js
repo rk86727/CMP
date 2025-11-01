@@ -1,387 +1,382 @@
-// Table Management
-class TableManager {
-    constructor() {
-        this.currentTable = 'contract';
-        this.currentContract = null;
-        this.editingItem = null;
-    }
+// Table Management Module
+const Tables = {
+    currentTable: 'contract',
+    currentContract: null,
 
-    // Render Contract Table
-    renderContractTable(filter = '') {
-        const tbody = document.querySelector('#contractDataTable tbody');
-        tbody.innerHTML = '';
-
-        let contracts = db.getAll('contracts');
-        if (filter) {
-            contracts = contracts.filter(c => c.contractNumber === filter);
+    // Table configurations
+    tableConfigs: {
+        contract: {
+            title: 'Contract Data',
+            table: 'contracts',
+            fields: [
+                { key: 'sn', label: 'SN', type: 'number', required: true },
+                { key: 'contractNumber', label: 'Contract Number', type: 'text', required: true },
+                { key: 'contractName', label: 'Contract Name', type: 'text', required: true },
+                { key: 'contractor', label: 'Contractor', type: 'text', required: true },
+                { key: 'district', label: 'District', type: 'text', required: true },
+                { key: 'component', label: 'Component', type: 'text' },
+                { key: 'budgetHead', label: 'Budget Head', type: 'text' },
+                { key: 'budgetAmount', label: 'Budget Amount', type: 'number' },
+                { key: 'estimatedAmount', label: 'Estimated Amount (with VAT & PS)', type: 'number' },
+                { key: 'agreementAmount', label: 'Agreement Amount (with VAT & PS)', type: 'number' },
+                { key: 'contractAmountVO', label: 'Contract Amount with VO', type: 'number' },
+                { key: 'agreementDate', label: 'Agreement Date', type: 'date' },
+                { key: 'originalCompletionDate', label: 'Original Completion Date', type: 'date' },
+                { key: 'extendedCompletionDate', label: 'Extended Completion Date', type: 'date' },
+                { key: 'pbDate', label: 'PB Date', type: 'date' },
+                { key: 'insuranceDate', label: 'Insurance Date', type: 'date' }
+            ]
+        },
+        bill: {
+            title: 'Bill Data',
+            table: 'bills',
+            fields: [
+                { key: 'sn', label: 'SN', type: 'number', required: true },
+                { key: 'contractNumber', label: 'Contract Number', type: 'select', required: true },
+                { key: 'numberOfBills', label: 'Number of Bills upto Date', type: 'number' },
+                { key: 'billPaidAmount', label: 'Bill Paid upto Date (with VAT & PS)', type: 'number' },
+                { key: 'billDetails', label: 'Bill Details', type: 'textarea' },
+                { key: 'remainingAmount', label: 'Remaining Amount', type: 'number', calculated: true },
+                { key: 'siteEngineer', label: 'Site Engineer', type: 'text' },
+                { key: 'siteSubEngineer1', label: 'Site Sub-engineer 1', type: 'text' },
+                { key: 'siteSubEngineer2', label: 'Site Sub-engineer 2', type: 'text' },
+                { key: 'siteSubEngineer3', label: 'Site Sub-engineer 3', type: 'text' },
+                { key: 'siteSubEngineer4', label: 'Site Sub-engineer 4', type: 'text' }
+            ]
+        },
+        boq: {
+            title: 'Bill of Quantities',
+            table: 'boqs',
+            fields: [
+                { key: 'sn', label: 'SN', type: 'number', required: true },
+                { key: 'contractNumber', label: 'Contract Number', type: 'select', required: true },
+                { key: 'description', label: 'Description of Items', type: 'textarea', required: true },
+                { key: 'unit', label: 'Unit', type: 'text', required: true },
+                { key: 'quantity', label: 'Quantity', type: 'number', required: true },
+                { key: 'contractRate', label: 'Contract Rate', type: 'number', required: true },
+                { key: 'amount', label: 'Amount', type: 'number', calculated: true },
+                { key: 'remarks', label: 'Remarks', type: 'textarea' }
+            ]
+        },
+        measurement: {
+            title: 'Field Measurement',
+            table: 'measurements',
+            fields: [
+                { key: 'sn', label: 'SN', type: 'number', required: true },
+                { key: 'contractNumber', label: 'Contract Number', type: 'select', required: true },
+                { key: 'structure', label: 'Structure', type: 'text', required: true },
+                { key: 'chainage', label: 'Chainage', type: 'text' },
+                { key: 'description', label: 'Description of Items', type: 'textarea' },
+                { key: 'unit', label: 'Unit', type: 'text' },
+                { key: 'no', label: 'No', type: 'number' },
+                { key: 'length', label: 'Length (m)', type: 'number' },
+                { key: 'breadth', label: 'Breadth (m)', type: 'number' },
+                { key: 'height', label: 'Height (m)', type: 'number' },
+                { key: 'quantity', label: 'Quantity', type: 'number', calculated: true },
+                { key: 'location', label: 'Location', type: 'location' }
+            ]
+        },
+        users: {
+            title: 'User Management',
+            table: 'users',
+            fields: [
+                { key: 'name', label: 'Name', type: 'text', required: true },
+                { key: 'email', label: 'Email', type: 'email', required: true },
+                { key: 'password', label: 'Password', type: 'password', required: true },
+                { key: 'role', label: 'Role', type: 'select', options: ['admin', 'user'], required: true }
+            ]
         }
+    },
 
-        contracts.forEach((contract, index) => {
-            const daysRemaining = db.calculateDaysRemaining(contract.extendedCompletionDate || contract.originalCompletionDate);
-            const row = tbody.insertRow();
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${contract.contractNumber || ''}</td>
-                <td>${contract.contractName || ''}</td>
-                <td>${contract.contractor || ''}</td>
-                <td>${contract.district || ''}</td>
-                <td>${contract.component || ''}</td>
-                <td>${contract.budgetHead || ''}</td>
-                <td>${contract.budgetAmount || ''}</td>
-                <td>${contract.estimatedAmount || ''}</td>
-                <td>${contract.agreementAmount || ''}</td>
-                <td>${contract.contractAmountVO || ''}</td>
-                <td>${contract.agreementDate || ''}</td>
-                <td>${contract.originalCompletionDate || ''}</td>
-                <td>${contract.extendedCompletionDate || ''}</td>
-                <td>${daysRemaining}</td>
-                <td>${contract.pbDate || ''}</td>
-                <td>${contract.insuranceDate || ''}</td>
-                <td>
-                    <div class="action-buttons">
-                        ${auth.hasPermission('edit', 'contracts') ?
-                    `<button class="edit-btn" onclick="tableManager.editContract(${contract.id})">Edit</button>` : ''}
-                        ${auth.hasPermission('delete', 'contracts') ?
-                    `<button class="delete-btn" onclick="tableManager.deleteContract(${contract.id})">Delete</button>` : ''}
-                    </div>
-                </td>
-            `;
+    // Render table
+    renderTable(tableName) {
+        const config = this.tableConfigs[tableName];
+        if (!config) return;
 
-            // Add double-click event
-            row.addEventListener('dblclick', () => this.editContract(contract.id));
-        });
-    }
-
-    // Render Bill Table
-    renderBillTable(filter = '') {
-        const tbody = document.querySelector('#billDataTable tbody');
-        tbody.innerHTML = '';
-
-        let bills = db.getAll('bills');
-        if (filter) {
-            bills = bills.filter(b => b.contractNumber === filter);
-        }
-
-        bills.forEach((bill, index) => {
-            const remainingAmount = db.calculateRemainingAmount(bill.contractNumber);
-            const row = tbody.insertRow();
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${bill.contractNumber || ''}</td>
-                <td>${bill.numberOfBills || ''}</td>
-                <td>${bill.billPaidToDate || ''}</td>
-                <td>${remainingAmount.toFixed(2)}</td>
-                <td>${bill.siteEngineer || ''}</td>
-                <td>${bill.subEngineer1 || ''}</td>
-                <td>${bill.subEngineer2 || ''}</td>
-                <td>${bill.subEngineer3 || ''}</td>
-                <td>${bill.subEngineer4 || ''}</td>
-                <td>
-                    <div class="action-buttons">
-                        ${auth.hasPermission('edit', 'bills') ?
-                    `<button class="edit-btn" onclick="tableManager.editBill(${bill.id})">Edit</button>` : ''}
-                        ${auth.hasPermission('delete', 'bills') ?
-                    `<button class="delete-btn" onclick="tableManager.deleteBill(${bill.id})">Delete</button>` : ''}
-                    </div>
-                </td>
-            `;
-
-            row.addEventListener('dblclick', () => this.editBill(bill.id));
-        });
-    }
-
-    // Render BoQ Table
-    renderBoqTable(contractNumber = '') {
-        const tbody = document.querySelector('#boqDataTable tbody');
-        tbody.innerHTML = '';
-
-        if (!contractNumber) return;
-
-        const boqItems = db.getByField('boq', 'contractNumber', contractNumber);
-
-        boqItems.forEach((item, index) => {
-            const amount = db.calculateBoqAmount(item.quantity, item.contractRate);
-            const row = tbody.insertRow();
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${item.description || ''}</td>
-                <td>${item.unit || ''}</td>
-                <td>${item.quantity || ''}</td>
-                <td>${item.contractRate || ''}</td>
-                <td>${amount.toFixed(2)}</td>
-                <td>${item.remarks || ''}</td>
-                <td>
-                    <div class="action-buttons">
-                        ${auth.hasPermission('edit', 'boq') ?
-                    `<button class="edit-btn" onclick="tableManager.editBoq(${item.id})">Edit</button>` : ''}
-                        ${auth.hasPermission('delete', 'boq') ?
-                    `<button class="delete-btn" onclick="tableManager.deleteBoq(${item.id})">Delete</button>` : ''}
-                    </div>
-                </td>
-            `;
-
-            row.addEventListener('dblclick', () => this.editBoq(item.id));
-        });
-    }
-
-    // Render Measurement Table
-    renderMeasurementTable(contractNumber = '') {
-        const tbody = document.querySelector('#measurementDataTable tbody');
-        tbody.innerHTML = '';
-
-        if (!contractNumber) return;
-
-        const measurements = db.getByField('measurements', 'contractNumber', contractNumber);
-
-        measurements.forEach((item, index) => {
-            const quantity = db.calculateMeasurementQuantity(
-                item.no, item.length, item.breadth, item.height
-            );
-            const row = tbody.insertRow();
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${item.structure || ''}</td>
-                <td>${item.chainage || ''}</td>
-                <td>${item.description || ''}</td>
-                <td>${item.unit || ''}</td>
-                <td>${item.no || ''}</td>
-                <td>${item.length || ''}</td>
-                <td>${item.breadth || ''}</td>
-                <td>${item.height || ''}</td>
-                <td>${quantity.toFixed(3)}</td>
-                <td>${item.location ? `📍 ${item.location.lat}, ${item.location.lng}` : ''}</td>
-                <td>
-                    <div class="action-buttons">
-                        ${auth.hasPermission('edit', 'measurements') ?
-                    `<button class="edit-btn" onclick="tableManager.editMeasurement(${item.id})">Edit</button>` : ''}
-                        ${auth.hasPermission('delete', 'measurements') ?
-                    `<button class="delete-btn" onclick="tableManager.deleteMeasurement(${item.id})">Delete</button>` : ''}
-                    </div>
-                </td>
-            `;
-
-            row.addEventListener('dblclick', () => this.editMeasurement(item.id));
-        });
-    }
-
-    // Render Users Table
-    renderUsersTable() {
-        const tbody = document.querySelector('#usersDataTable tbody');
-        tbody.innerHTML = '';
-
-        const users = db.getAll('users');
-
-        users.forEach((user, index) => {
-            const row = tbody.insertRow();
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${user.email || ''}</td>
-                <td>${user.name || ''}</td>
-                <td>${user.role || ''}</td>
-                <td><span class="badge badge-${user.status}">${user.status || ''}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        ${auth.hasPermission('edit', 'users') ?
-                    `<button class="edit-btn" onclick="tableManager.editUser(${user.id})">Edit</button>` : ''}
-                        ${auth.hasPermission('delete', 'users') && user.role !== 'superadmin' ?
-                    `<button class="delete-btn" onclick="tableManager.deleteUser(${user.id})">Delete</button>` : ''}
-                    </div>
-                </td>
-            `;
-
-            row.addEventListener('dblclick', () => this.editUser(user.id));
-        });
-    }
-
-    // Edit Contract
-    editContract(id) {
-        if (!auth.hasPermission('edit', 'contracts')) {
-            alert('You do not have permission to edit contracts');
-            return;
-        }
-
-        this.editingItem = db.getById('contracts', id);
-        this.showModal('Edit Contract', this.getContractForm(), () => {
-            this.saveContract();
-        });
-    }
-
-    // Add Contract
-    addContract() {
-        if (!auth.hasPermission('add', 'contracts')) {
-            alert('You do not have permission to add contracts');
-            return;
-        }
-
-        this.editingItem = null;
-        this.showModal('Add Contract', this.getContractForm(), () => {
-            this.saveContract();
-        });
-    }
-
-    // Save Contract
-    saveContract() {
-        const formData = this.getFormData();
-
-        if (this.editingItem) {
-            db.update('contracts', this.editingItem.id, formData);
+        const tableContent = document.getElementById('tableContent');
+        const tableTitle = document.getElementById('tableTitle');
+        
+        tableTitle.textContent = config.title;
+        
+        let data;
+        if (tableName === 'users') {
+            data = Auth.getAllUsers();
         } else {
-            db.add('contracts', formData);
+            data = Database.getAll(config.table);
         }
 
-        this.renderContractTable();
-        this.updateContractFilters();
-        this.hideModal();
-    }
-
-    // Delete Contract
-    deleteContract(id) {
-        if (!auth.hasPermission('delete', 'contracts')) {
-            alert('You do not have permission to delete contracts');
-            return;
+        // Filter by contract if selected
+        const contractFilter = document.getElementById('contractFilter').value;
+        if (contractFilter && tableName !== 'contract' && tableName !== 'users') {
+            data = data.filter(d => d.contractNumber === contractFilter);
         }
 
-        if (confirm('Are you sure you want to delete this contract?')) {
-            db.delete('contracts', id);
-            this.renderContractTable();
-            this.updateContractFilters();
-        }
-    }
-
-    // Similar methods for Bills, BoQ, Measurements, and Users...
-    // (Implementation follows same pattern)
-
-    // Get Contract Form HTML
-    getContractForm() {
-        const contract = this.editingItem || {};
-        return `
-            <div class="form-group">
-                <label>Contract Number *</label>
-                <input type="text" name="contractNumber" value="${contract.contractNumber || ''}" required>
-            </div>
-            <div class="form-group">
-                <label>Contract Name *</label>
-                <input type="text" name="contractName" value="${contract.contractName || ''}" required>
-            </div>
-            <div class="form-group">
-                <label>Contractor</label>
-                <input type="text" name="contractor" value="${contract.contractor || ''}">
-            </div>
-            <div class="form-group">
-                <label>District</label>
-                <input type="text" name="district" value="${contract.district || ''}">
-            </div>
-            <div class="form-group">
-                <label>Component</label>
-                <input type="text" name="component" value="${contract.component || ''}">
-            </div>
-            <div class="form-group">
-                <label>Budget Head</label>
-                <input type="text" name="budgetHead" value="${contract.budgetHead || ''}">
-            </div>
-            <div class="form-group">
-                <label>Budget Amount</label>
-                <input type="number" step="0.01" name="budgetAmount" value="${contract.budgetAmount || ''}">
-            </div>
-            <div class="form-group">
-                <label>Estimated Amount (with VAT and PS)</label>
-                <input type="number" step="0.01" name="estimatedAmount" value="${contract.estimatedAmount || ''}">
-            </div>
-            <div class="form-group">
-                <label>Agreement Amount (with VAT and PS)</label>
-                <input type="number" step="0.01" name="agreementAmount" value="${contract.agreementAmount || ''}">
-            </div>
-            <div class="form-group">
-                <label>Contract Amount with VO</label>
-                <input type="number" step="0.01" name="contractAmountVO" value="${contract.contractAmountVO || ''}">
-            </div>
-            <div class="form-group">
-                <label>Agreement Date</label>
-                <input type="date" name="agreementDate" value="${contract.agreementDate || ''}">
-            </div>
-            <div class="form-group">
-                <label>Original Completion Date</label>
-                <input type="date" name="originalCompletionDate" value="${contract.originalCompletionDate || ''}">
-            </div>
-            <div class="form-group">
-                <label>Extended Completion Date</label>
-                <input type="date" name="extendedCompletionDate" value="${contract.extendedCompletionDate || ''}">
-            </div>
-            <div class="form-group">
-                <label>PB Date</label>
-                <input type="date" name="pbDate" value="${contract.pbDate || ''}">
-            </div>
-            <div class="form-group">
-                <label>Insurance Date</label>
-                <input type="date" name="insuranceDate" value="${contract.insuranceDate || ''}">
-            </div>
-        `;
-    }
-
-    // Show Modal
-    showModal(title, content, onSave) {
-        const modal = document.getElementById('modal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalContent = document.getElementById('modalFormContent');
-
-        modalTitle.textContent = title;
-        modalContent.innerHTML = content;
-
-        this.currentModalSave = onSave;
-        modal.classList.add('active');
-    }
-
-    // Hide Modal
-    hideModal() {
-        const modal = document.getElementById('modal');
-        modal.classList.remove('active');
-        this.currentModalSave = null;
-    }
-
-    // Get Form Data
-    getFormData() {
-        const form = document.getElementById('modalForm');
-        const formData = {};
-
-        form.querySelectorAll('input, select, textarea').forEach(field => {
-            if (field.name) {
-                formData[field.name] = field.value;
+        // Create table HTML
+        let html = '<table class="data-table"><thead><tr>';
+        
+        // Add headers
+        config.fields.forEach(field => {
+            if (!field.calculated) {
+                html += `<th>${field.label}</th>`;
             }
         });
+        
+        // Add calculated fields for display
+        if (tableName === 'contract') {
+            html += '<th>Days Remaining</th>';
+        } else if (tableName === 'boq') {
+            html += '<th>Amount</th>';
+        } else if (tableName === 'measurement') {
+            html += '<th>Quantity</th>';
+        } else if (tableName === 'bill') {
+            html += '<th>Remaining Amount</th>';
+        }
+        
+        if (Auth.hasPermission('edit', tableName)) {
+            html += '<th>Actions</th>';
+        }
+        
+        html += '</tr></thead><tbody>';
 
-        return formData;
-    }
-
-    // Update Contract Filters
-    updateContractFilters() {
-        const contracts = db.getContractNumbers();
-        const filter = document.getElementById('contractFilter');
-        const boqSelect = document.getElementById('boqContractSelect');
-        const measurementSelect = document.getElementById('measurementContractSelect');
-
-        // Update main filter
-        filter.innerHTML = '<option value="">All Contracts</option>';
-        contracts.forEach(c => {
-            filter.innerHTML += `<option value="${c.number}">${c.number} - ${c.name}</option>`;
+        // Add data rows
+        data.forEach(record => {
+            html += `<tr onclick="Tables.editRecord('${tableName}', ${record.id})">`;
+            
+            config.fields.forEach(field => {
+                if (!field.calculated) {
+                    let value = record[field.key] || '-';
+                    if (field.type === 'date' && value !== '-') {
+                        value = new Date(value).toLocaleDateString();
+                    }
+                    html += `<td>${value}</td>`;
+                }
+            });
+            
+            // Add calculated fields
+            if (tableName === 'contract') {
+                const days = record.extendedCompletionDate ? 
+                    Database.calculateDaysRemaining(record.extendedCompletionDate) : '-';
+                html += `<td>${days}</td>`;
+            } else if (tableName === 'boq') {
+                const amount = (record.quantity * record.contractRate).toFixed(2);
+                html += `<td>${amount}</td>`;
+            } else if (tableName === 'measurement') {
+                const quantity = (record.no * record.length * record.breadth * record.height).toFixed(3);
+                html += `<td>${quantity}</td>`;
+            } else if (tableName === 'bill') {
+                // Get contract amount
+                const contract = Database.getAll('contracts').find(c => c.contractNumber === record.contractNumber);
+                const remaining = contract ? 
+                    Database.calculateRemainingAmount(contract.agreementAmount || 0, record.billPaidAmount || 0) : '-';
+                html += `<td>${remaining}</td>`;
+            }
+            
+            if (Auth.hasPermission('edit', tableName)) {
+                html += `<td class="action-buttons">
+                    <button class="btn-edit" onclick="event.stopPropagation(); Tables.editRecord('${tableName}', ${record.id})">Edit</button>`;
+                
+                if (Auth.hasPermission('delete', tableName)) {
+                    html += `<button class="btn-delete" onclick="event.stopPropagation(); Tables.deleteRecord('${tableName}', ${record.id})">Delete</button>`;
+                }
+                
+                html += '</td>';
+            }
+            
+            html += '</tr>';
         });
 
-        // Update BoQ filter
-        if (boqSelect) {
-            boqSelect.innerHTML = '<option value="">Select Contract</option>';
-            contracts.forEach(c => {
-                boqSelect.innerHTML += `<option value="${c.number}">${c.number} - ${c.name}</option>`;
-            });
+        html += '</tbody></table>';
+        
+        if (data.length === 0) {
+            html = '<div class="text-center p-2">No records found</div>';
         }
+        
+        tableContent.innerHTML = html;
+    },
 
-        // Update Measurement filter
-        if (measurementSelect) {
-            measurementSelect.innerHTML = '<option value="">Select Contract</option>';
-            contracts.forEach(c => {
-                measurementSelect.innerHTML += `<option value="${c.number}">${c.number} - ${c.name}</option>`;
-            });
+    // Show form in modal
+    showForm(tableName, recordId = null) {
+        const config = this.tableConfigs[tableName];
+        if (!config) return;
+
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        
+        let record = null;
+        if (recordId) {
+            if (tableName === 'users') {
+                record = Auth.getAllUsers().find(u => u.id === recordId);
+            } else {
+                record = Database.getById(config.table, recordId);
+            }
         }
+        
+        modalTitle.textContent = record ? `Edit ${config.title}` : `Add New ${config.title}`;
+        
+        // Create form HTML
+        let html = '<form id="dataForm">';
+        
+        config.fields.forEach(field => {
+            if (field.calculated) return;
+            
+            const value = record ? (record[field.key] || '') : '';
+            const required = field.required ? 'required' : '';
+            
+            html += `<div class="form-group">
+                <label for="${field.key}">${field.label}</label>`;
+            
+            if (field.type === 'textarea') {
+                html += `<textarea id="${field.key}" name="${field.key}" ${required}>${value}</textarea>`;
+            } else if (field.type === 'select') {
+                html += `<select id="${field.key}" name="${field.key}" ${required}>`;
+                
+                if (field.key === 'contractNumber') {
+                    // Load contract numbers
+                    const contracts = Database.getAll('contracts');
+                    html += '<option value="">Select Contract</option>';
+                    contracts.forEach(c => {
+                        const selected = value === c.contractNumber ? 'selected' : '';
+                        html += `<option value="${c.contractNumber}" ${selected}>${c.contractNumber} - ${c.contractName}</option>`;
+                    });
+                } else if (field.options) {
+                    field.options.forEach(opt => {
+                        const selected = value === opt ? 'selected' : '';
+                        html += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    });
+                }
+                
+                html += '</select>';
+            } else if (field.type === 'location') {
+                html += `<input type="text" id="${field.key}" name="${field.key}" value="${value}" readonly>
+                    <button type="button" class="btn-location" onclick="Tables.getLocation('${field.key}')">Get GPS Location</button>`;
+            } else {
+                html += `<input type="${field.type}" id="${field.key}" name="${field.key}" value="${value}" ${required}>`;
+            }
+            
+            html += '</div>';
+        });
+        
+        if (recordId) {
+            html += `<input type="hidden" id="recordId" value="${recordId}">`;
+        }
+        
+        html += '</form>';
+        
+        modalBody.innerHTML = html;
+        modal.classList.add('show');
+        
+        // Add save handler
+        document.getElementById('saveBtn').onclick = () => this.saveRecord(tableName);
+    },
+
+    // Save record
+    saveRecord(tableName) {
+        const config = this.tableConfigs[tableName];
+        const form = document.getElementById('dataForm');
+        const formData = new FormData(form);
+        const recordId = document.getElementById('recordId')?.value;
+        
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        // Calculate fields
+        if (tableName === 'boq') {
+            data.amount = (parseFloat(data.quantity || 0) * parseFloat(data.contractRate || 0)).toFixed(2);
+        } else if (tableName === 'measurement') {
+            data.quantity = (parseFloat(data.no || 1) * parseFloat(data.length || 0) * 
+                           parseFloat(data.breadth || 0) * parseFloat(data.height || 0)).toFixed(3);
+        }
+        
+        if (recordId) {
+            if (tableName === 'users') {
+                Auth.updateUser(parseInt(recordId), data);
+            } else {
+                Database.update(config.table, parseInt(recordId), data);
+            }
+        } else {
+            if (tableName === 'users') {
+                Auth.createUser(data);
+            } else {
+                Database.create(config.table, data);
+            }
+        }
+        
+        this.closeModal();
+        this.renderTable(tableName);
+        this.updateContractFilter();
+    },
+
+    // Edit record
+    editRecord(tableName, recordId) {
+        if (!Auth.hasPermission('edit', tableName)) {
+            alert('You do not have permission to edit this record');
+            return;
+        }
+        this.showForm(tableName, recordId);
+    },
+
+    // Delete record
+    deleteRecord(tableName, recordId) {
+        if (!Auth.hasPermission('delete', tableName)) {
+            alert('You do not have permission to delete this record');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to delete this record?')) {
+            const config = this.tableConfigs[tableName];
+            
+            if (tableName === 'users') {
+                Auth.deleteUser(recordId);
+            } else {
+                Database.delete(config.table, recordId);
+            }
+            
+            this.renderTable(tableName);
+            this.updateContractFilter();
+        }
+    },
+
+    // Get GPS location
+    getLocation(fieldId) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    document.getElementById(fieldId).value = `${lat}, ${lng}`;
+                },
+                (error) => {
+                    alert('Error getting location: ' + error.message);
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by this browser.');
+        }
+    },
+
+    // Close modal
+    closeModal() {
+        document.getElementById('modal').classList.remove('show');
+    },
+
+    // Update contract filter dropdown
+    updateContractFilter() {
+        const contracts = Database.getAll('contracts');
+        const filterSelect = document.getElementById('contractFilter');
+        const currentValue = filterSelect.value;
+        
+        filterSelect.innerHTML = '<option value="">All Contracts</option>';
+        contracts.forEach(contract => {
+            const option = document.createElement('option');
+            option.value = contract.contractNumber;
+            option.textContent = `${contract.contractNumber} - ${contract.contractName}`;
+            if (option.value === currentValue) {
+                option.selected = true;
+            }
+            filterSelect.appendChild(option);
+        });
     }
-}
-
-// Initialize table manager
-const tableManager = new TableManager();
+};
