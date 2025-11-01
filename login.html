@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Road Construction Management</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="styles.css">
     <meta name="theme-color" content="#2196F3">
 </head>
 <body>
@@ -26,23 +26,60 @@
                 <div id="errorMsg" class="error-message"></div>
             </form>
             <div class="login-info">
-                <p>Default Superadmin:</p>
+                <p><strong>Default Superadmin:</strong></p>
                 <p>Email: admin@roadconstruction.com</p>
                 <p>Password: Admin@123</p>
             </div>
         </div>
     </div>
-    <script src="js/auth.js"></script>
+
     <script>
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
+        // Initialize default users in localStorage
+        if (!localStorage.getItem('users')) {
+            const defaultUsers = [
+                {
+                    id: 1,
+                    email: 'admin@roadconstruction.com',
+                    password: 'Admin@123',
+                    role: 'superadmin',
+                    name: 'Super Admin'
+                }
+            ];
+            localStorage.setItem('users', JSON.stringify(defaultUsers));
+        }
+
+        // Initialize empty tables
+        const tables = ['contracts', 'bills', 'boqs', 'measurements'];
+        tables.forEach(table => {
+            if (!localStorage.getItem(table)) {
+                localStorage.setItem(table, JSON.stringify([]));
+            }
+        });
+
+        // Handle login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
             
-            if (Auth.login(email, password)) {
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                // Store session
+                sessionStorage.setItem('currentUser', JSON.stringify({
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                    loginTime: new Date().toISOString()
+                }));
+                
+                // Redirect to main page
                 window.location.href = 'index.html';
             } else {
-                document.getElementById('errorMsg').textContent = 'Invalid credentials';
+                document.getElementById('errorMsg').textContent = 'Invalid email or password';
             }
         });
     </script>
