@@ -30,29 +30,44 @@
                 <p>Email: admin@roadconstruction.com</p>
                 <p>Password: Admin@123</p>
             </div>
+            <div id="connectionStatus" class="connection-status">
+                Checking connection...
+            </div>
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+    
     <script>
-        // Initialize default users in localStorage
-        if (!localStorage.getItem('users')) {
-            const defaultUsers = [
-                {
-                    id: 1,
-                    email: 'admin@roadconstruction.com',
-                    password: 'Admin@123',
-                    role: 'superadmin',
-                    name: 'Super Admin'
-                }
-            ];
-            localStorage.setItem('users', JSON.stringify(defaultUsers));
-        }
+        // Check Firebase connection
+        firebase.database().ref('.info/connected').on('value', function(snapshot) {
+            const status = document.getElementById('connectionStatus');
+            if (snapshot.val() === true) {
+                status.innerHTML = '✅ Connected to server';
+                status.style.color = '#4CAF50';
+            } else {
+                status.innerHTML = '❌ Offline - Check internet connection';
+                status.style.color = '#F44336';
+            }
+        });
 
-        // Initialize empty tables
-        const tables = ['contracts', 'bills', 'boqs', 'measurements'];
-        tables.forEach(table => {
-            if (!localStorage.getItem(table)) {
-                localStorage.setItem(table, JSON.stringify([]));
+        // Initialize default admin if not exists
+        firebase.database().ref('users').once('value').then(function(snapshot) {
+            if (!snapshot.exists()) {
+                // Create default superadmin
+                firebase.database().ref('users').push({
+                    email: 'admin@roadconstruction.com',
+                    password: 'Admin@123', // In production, use proper hashing
+                    role: 'superadmin',
+                    name: 'Super Admin',
+                    createdAt: new Date().toISOString()
+                });
             }
         });
 
@@ -62,25 +77,37 @@
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const errorMsg = document.getElementById('errorMsg');
             
-            const user = users.find(u => u.email === email && u.password === password);
+            errorMsg.textContent = 'Logging in...';
             
-            if (user) {
-                // Store session
-                sessionStorage.setItem('currentUser', JSON.stringify({
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                    loginTime: new Date().toISOString()
-                }));
-                
-                // Redirect to main page
-                window.location.href = 'index.html';
-            } else {
-                document.getElementById('errorMsg').textContent = 'Invalid email or password';
-            }
+            // Check user in Firebase
+            firebase.database().ref('users').orderByChild('email').equalTo(email).once('value')
+                .then(function(snapshot) {
+                    let userFound = false;
+                    snapshot.forEach(function(childSnapshot) {
+                        const user = childSnapshot.val();
+                        if (user.password === password) {
+                            userFound = true;
+                            // Store session
+                            sessionStorage.setItem('currentUser', JSON.stringify({
+                                id: childSnapshot.key,
+                                email: user.email,
+                                name: user.name,
+                                role: user.role,
+                                loginTime: new Date().toISOString()
+                            }));
+                            window.location.href = 'index.html';
+                        }
+                    });
+                    
+                    if (!userFound) {
+                        errorMsg.textContent = 'Invalid email or password';
+                    }
+                })
+                .catch(function(error) {
+                    errorMsg.textContent = 'Error: ' + error.message;
+                });
         });
     </script>
 </body>
