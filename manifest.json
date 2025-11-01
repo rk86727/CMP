@@ -1,11 +1,11 @@
 {
-    "name": "Road Construction Management",
-    "short_name": "RCM",
-    "description": "Professional Road Construction Management System",
-    "start_url": "/",
+    "name": "Road Construction Management System",
+    "short_name": "RoadConstruct",
+    "description": "Professional Road Construction Management PWA",
+    "start_url": "/index.html",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#2c3e50",
+    "theme_color": "#2196F3",
     "orientation": "any",
     "icons": [
         {
@@ -19,6 +19,19 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
+        }
+    ],
+    "categories": ["business", "productivity"],
+    "shortcuts": [
+        {
+            "name": "Contracts",
+            "url": "/index.html#contract",
+            "description": "View contracts"
+        },
+        {
+            "name": "Bills",
+            "url": "/index.html#bill",
+            "description": "View bills"
         }
     ]
 }
